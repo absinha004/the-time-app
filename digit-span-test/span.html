@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Digit Span Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 100px;
+    }
+    #instruction, #sequence, #result {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    #userInput {
+      font-size: 20px;
+      padding: 5px 10px;
+      width: 100px;
+      text-align: center;
+    }
+    #submitBtn, #startBtn {
+      font-size: 20px;
+      padding: 10px 25px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="instruction">Click "Start" to begin the Digit Span Test.</div>
+  <button id="startBtn">Start</button>
+  <div id="sequence" style="height:40px;"></div>
+  <input type="text" id="userInput" style="display:none" autocomplete="off" maxlength="20" />
+  <br />
+  <button id="submitBtn" style="display:none">Submit</button>
+  <div id="result"></div>
+
+  <script>
+    const startBtn = document.getElementById('startBtn');
+    const instruction = document.getElementById('instruction');
+    const sequenceDiv = document.getElementById('sequence');
+    const userInput = document.getElementById('userInput');
+    const submitBtn = document.getElementById('submitBtn');
+    const result = document.getElementById('result');
+
+    let currentLength = 3;
+    let maxCorrectLength = 0;
+    let sequence = [];
+    let inputEnabled = false;
+
+    // Generate random digit string of given length
+    function generateSequence(length) {
+      let seq = '';
+      for (let i = 0; i < length; i++) {
+        seq += Math.floor(Math.random() * 10);
+      }
+      return seq;
+    }
+
+    function showSequence(seq) {
+      sequenceDiv.textContent = seq;
+      setTimeout(() => {
+        sequenceDiv.textContent = '';
+        userInput.style.display = 'inline-block';
+        userInput.value = '';
+        userInput.focus();
+        submitBtn.style.display = 'inline-block';
+        inputEnabled = true;
+        instruction.textContent = 'Enter the sequence you saw:';
+      }, 1500);
+    }
+
+    function nextTrial() {
+      sequence = generateSequence(currentLength);
+      instruction.textContent = `Remember this ${currentLength}-digit sequence:`;
+      userInput.style.display = 'none';
+      submitBtn.style.display = 'none';
+      inputEnabled = false;
+      sequenceDiv.textContent = '';
+      setTimeout(() => {
+        showSequence(sequence);
+      }, 1000);
+    }
+
+    submitBtn.onclick = () => {
+      if (!inputEnabled) return;
+      inputEnabled = false;
+
+      const userAnswer = userInput.value.trim();
+      if (userAnswer === sequence) {
+        maxCorrectLength = currentLength;
+        currentLength++;
+        instruction.textContent = 'Correct! Get ready for the next sequence.';
+        sequenceDiv.textContent = '';
+        userInput.style.display = 'none';
+        submitBtn.style.display = 'none';
+        setTimeout(nextTrial, 1500);
+      } else {
+        instruction.textContent = 'Incorrect. Test complete.';
+        result.innerHTML = `<b>Longest correct sequence length:</b> ${maxCorrectLength}`;
+        userInput.style.display = 'none';
+        submitBtn.style.display = 'none';
+        startBtn.style.display = 'inline-block';
+        startBtn.textContent = 'Retake Test';
+      }
+    };
+
+    startBtn.onclick = () => {
+      currentLength = 3;
+      maxCorrectLength = 0;
+      result.textContent = '';
+      startBtn.style.display = 'none';
+      nextTrial();
+    };
+  </script>
+</body>
+</html>

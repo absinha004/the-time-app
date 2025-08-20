@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sustained Attention Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 100px;
+    }
+    #instruction, #letter, #result {
+      font-size: 36px;
+      margin-bottom: 30px;
+      height: 60px;
+    }
+    #startButton {
+      font-size: 24px;
+      padding: 15px 40px;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div id="instruction">Press spacebar ONLY when you see the letter "X". Click Start to begin.</div>
+  <button id="startButton">Start Test</button>
+  <div id="letter"></div>
+  <div id="result"></div>
+
+  <script>
+    const startButton = document.getElementById('startButton');
+    const letterDiv = document.getElementById('letter');
+    const instruction = document.getElementById('instruction');
+    const result = document.getElementById('result');
+
+    const totalTrials = 30;
+    const targetLetter = 'X';
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    let currentTrial = 0;
+    let trialSequence = [];
+    let reactionTimes = [];
+    let correctResponses = 0;
+    let falseAlarms = 0;
+    let waitingForResponse = false;
+    let stimulusStartTime = 0;
+
+    // Generate sequence with about 30% target letters
+    function generateSequence() {
+      const seq = [];
+      for (let i = 0; i < totalTrials; i++) {
+        if (Math.random() < 0.3) {
+          seq.push(targetLetter);
+        } else {
+          let letter;
+          do {
+            letter = letters[Math.floor(Math.random() * letters.length)];
+          } while (letter === targetLetter);
+          seq.push(letter);
+        }
+      }
+      return seq;
+    }
+
+    function showLetter(letter) {
+      letterDiv.textContent = letter;
+      stimulusStartTime = performance.now();
+      waitingForResponse = true;
+
+      // Set up a timeout for no response within 1500ms
+      setTimeout(() => {
+        if (waitingForResponse) {
+          waitingForResponse = false;
+          nextTrial();
+        }
+      }, 1500);
+    }
+
+    function nextTrial() {
+      currentTrial++;
+      if (currentTrial > totalTrials) {
+        endTest();
+        return;
+      }
+      showLetter(trialSequence[currentTrial - 1]);
+    }
+
+    function endTest() {
+      letterDiv.textContent = '';
+      instruction.textContent = 'Test complete!';
+      const avgReactionTime = reactionTimes.length > 0 ? (reactionTimes.reduce((a,b) => a + b, 0) / reactionTimes.length).toFixed(2) : 'N/A';
+      result.innerHTML = `
+        Correct Responses: ${correctResponses} <br />
+        False Alarms (incorrect presses): ${falseAlarms} <br />
+        Average Reaction Time (ms): ${avgReactionTime}
+      `;
+      startButton.style.display = 'inline-block';
+    }
+
+    startButton.onclick = () => {
+      trialSequence = generateSequence();
+      currentTrial = 0;
+      reactionTimes = [];
+      correctResponses = 0;
+      falseAlarms = 0;
+      result.textContent = '';
+      instruction.textContent = 'Press spacebar ONLY when you see the letter "X".';
+      startButton.style.display = 'none';
+      nextTrial();
+    };
+
+    window.addEventListener('keydown', (e) => {
+      if (!waitingForResponse) return;
+      if (e.code === 'Space') {
+        waitingForResponse = false;
+        const currentLetter = trialSequence[currentTrial - 1];
+        const reactionTime = performance.now() - stimulusStartTime;
+
+        if (currentLetter === targetLetter) {
+          correctResponses++;
+          reactionTimes.push(reactionTime);
+        } else {
+          falseAlarms++;
+        }
+        nextTrial();
+      }
+    });
+  </script>
+</body>
+</html>

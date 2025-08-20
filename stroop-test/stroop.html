@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Stroop Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 100px;
+    }
+    #word {
+      font-size: 48px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      height: 70px;
+    }
+    #instruction, #sequence, #result {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .color-button {
+      font-size: 20px;
+      padding: 15px 30px;
+      margin: 5px;
+      cursor: pointer;
+      border-radius: 8px;
+      border: none;
+      color: white;
+    }
+    #redButton {background-color: red;}
+    #blueButton {background-color: blue;}
+    #greenButton {background-color: green;}
+    #yellowButton {background-color: goldenrod;}
+    #startButton {
+      font-size: 20px;
+      padding: 15px 40px;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+    #result {
+      margin-top: 30px;
+      font-size: 22px;
+    }
+  </style>
+</head>
+<body>
+  <div id="instruction">Click the color of the word which comes on the screen. DO NOT click the color described by the word</div>
+  <button id="startButton">Start Stroop Test</button>
+  <div id="word"></div>
+  <div>
+    <button class="color-button" id="redButton">Red</button>
+    <button class="color-button" id="blueButton">Blue</button>
+    <button class="color-button" id="greenButton">Green</button>
+    <button class="color-button" id="yellowButton">Yellow</button>
+  </div>
+  <div id="result"></div>
+
+  <script>
+    const startButton = document.getElementById('startButton');
+    const wordDisplay = document.getElementById('word');
+    const colorButtons = document.querySelectorAll('.color-button');
+    const resultDiv = document.getElementById('result');
+
+    const colors = ['red', 'blue', 'green', 'yellow'];
+    const words = ['RED', 'BLUE', 'GREEN', 'YELLOW'];
+
+    let trialCount = 0;
+    const maxTrials = 10;
+    let correctCount = 0;
+    let reactionTimes = [];
+    let startTime = 0;
+
+    function getRandomInt(max) {
+      return Math.floor(Math.random() * max);
+    }
+
+    function createTrial() {
+      // Random word
+      const wordIndex = getRandomInt(words.length);
+      const word = words[wordIndex];
+
+      // Random color different or same to create congruent or incongruent tests
+      let colorIndex;
+      do {
+        colorIndex = getRandomInt(colors.length);
+      } while (colorIndex === wordIndex && Math.random() < 0.5); // ~50% incongruent
+
+      const color = colors[colorIndex];
+
+      return { word, color, correctAnswer: color };
+    }
+
+    function displayTrial(trial) {
+      wordDisplay.textContent = trial.word;
+      wordDisplay.style.color = trial.color;
+      startTime = performance.now();
+    }
+
+    function resetTest() {
+      trialCount = 0;
+      correctCount = 0;
+      reactionTimes = [];
+      resultDiv.textContent = '';
+      startButton.style.display = 'none';
+      wordDisplay.textContent = '';
+    }
+
+    function endTest() {
+      startButton.style.display = 'inline-block';
+      const avgTime = reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length;
+      const accuracy = (correctCount / maxTrials) * 100;
+      resultDiv.innerHTML = `<b>Test Complete!</b><br>Accuracy: ${accuracy.toFixed(1)}%<br>Average Reaction Time: ${avgTime.toFixed(2)} ms`;
+    }
+
+    let currentTrial;
+
+    startButton.onclick = () => {
+      resetTest();
+      nextTrial();
+    };
+
+    function nextTrial() {
+      if (trialCount >= maxTrials) {
+        endTest();
+        return;
+      }
+      currentTrial = createTrial();
+      displayTrial(currentTrial);
+      trialCount++;
+    }
+
+    colorButtons.forEach(btn => {
+      btn.onclick = () => {
+        if (!currentTrial) return;
+        const reactionTime = performance.now() - startTime;
+        reactionTimes.push(reactionTime);
+        const userChoice = btn.id.replace('Button', '').toLowerCase();
+
+        if (userChoice === currentTrial.correctAnswer) {
+          correctCount++;
+        }
+        nextTrial();
+      };
+    });
+  </script>
+</body>
+</html>
